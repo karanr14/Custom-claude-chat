@@ -17,7 +17,8 @@
         .control-panel { width: 350px; background: white; padding: 25px; border-right: 2px solid #e5e7eb; display: flex; flex-direction: column; justify-content: flex-start; z-index: 10; }
         h2 { margin-top: 0; color: #d97706; font-size: 20px; }
         label { font-weight: bold; font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; }
-        textarea { width: 100%; height: 150px; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; resize: none; margin-bottom: 15px; }
+        select, textarea { width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; }
+        textarea { height: 150px; resize: none; }
         button { background: #d97706; color: white; border: none; padding: 14px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
         button:hover { background: #b45309; }
         button:disabled { background: #9ca3af; cursor: not-allowed; }
@@ -39,6 +40,14 @@
             <h2>Claude Workspace</h2>
             <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
             
+            <label for="modelSelect">Select Model:</label>
+            <select id="modelSelect">
+                <option value="claude-fable-5-1">Claude Fable 5.1 (Flagship Reasoning)</option>
+                <option value="claude-opus-5">Claude Opus 5 (Agentic & High Performance)</option>
+                <option value="claude-sonnet-5" selected>Claude Sonnet 5 (Balanced & Fast)</option>
+                <option value="claude-haiku-4-5">Claude Haiku 4.5 (Lightweight)</option>
+            </select>
+
             <label for="promptInput">Type Your AI Prompt:</label>
             <textarea id="promptInput" placeholder="Ask Claude to generate a website layout, write complex scripts, explain theory..."></textarea>
             
@@ -62,6 +71,7 @@
     <script>
         async function sendToClaude() {
             const promptValue = document.getElementById('promptInput').value.trim();
+            const selectedModel = document.getElementById('modelSelect').value;
             const outputDiv = document.getElementById('aiOutput');
             const placeholder = document.getElementById('fallbackMessage');
             const button = document.getElementById('submitBtn');
@@ -78,13 +88,13 @@
             button.innerText = "Generating...";
 
             try {
-                // Pass normalize: true to force string output format
+                // Call Puter.js using the user-selected model
                 const response = await puter.ai.chat(promptValue, { 
-                    model: 'claude-sonnet-5',
+                    model: selectedModel,
                     normalize: true 
                 });
                 
-                // Helper function to unpack string content from Puter.js response
+                // Helper function to unpack string content
                 let textContent = "";
                 if (typeof response === 'string') {
                     textContent = response;
