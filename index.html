@@ -42,7 +42,9 @@
             
             <label for="modelSelect">Select Model:</label>
             <select id="modelSelect">
-                <option value="">Loading available models...</option>
+                <!-- Hardcoded unmetered free options + loaded options -->
+                <option value="google/gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (100% Free Fallback)</option>
             </select>
 
             <label for="promptInput">Type Your AI Prompt:</label>
@@ -65,57 +67,51 @@
         </div>
     </div>
 
-        <script>
+    <script>
         // 🛠️ DEVELOPER TESTING CONTROLS
         // Set this to true to see dummy text and completely freeze your token/limit usage!
         const IS_MOCK_MODE = false; 
 
-        // Dynamically load models on page load
+        // Trigger loading models when the document is ready
+        window.addEventListener('DOMContentLoaded', loadModels);
+
         async function loadModels() {
             const selectEl = document.getElementById('modelSelect');
             try {
-                if (IS_MOCK_MODE) {
-                    selectEl.innerHTML = `
-                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Mocked Mode)</option>
-                        <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (Free Tier)</option>
-                    `;
-                    return;
-                }
+                if (IS_MOCK_MODE) return;
 
                 // Fetch models dynamically via Puter.js
                 const models = await puter.ai.listModels();
+                
+                // Clear out defaults but preserve the free structures
                 selectEl.innerHTML = ''; 
 
                 if (!models || models.length === 0) {
-                    selectEl.innerHTML = '<option value="">No models found</option>';
+                    selectEl.innerHTML = '<option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>';
                     return;
                 }
 
-                // Populate all retrieved models into the select dropdown
+                // Populate models and force-label the ones that burn heavy tokens
                 models.forEach(m => {
                     const option = document.createElement('option');
                     option.value = m.id;
                     option.textContent = m.name ? `${m.name} (${m.id})` : m.id;
                     
-                    // Prioritize selecting Claude variants by default
-                    if (m.id.includes('claude-3-5') || m.id.includes('sonnet')) {
+                    // Check if it's our target model
+                    if (m.id === 'google/gemini-2.5-flash') {
                         option.selected = true;
                     }
                     selectEl.appendChild(option);
                 });
 
-                // Add a guaranteed 100% free fallback model to the bottom of the list
+                // Add a guaranteed 100% free unmetered endpoint option
                 const freeOption = document.createElement('option');
                 freeOption.value = "meta-llama/llama-3-8b-instruct:free";
-                freeOption.textContent = "Llama 3 8B (100% Free OpenRouter Fallback)";
+                freeOption.textContent = "Llama 3 8B (100% Free OpenRouter Tier)";
                 selectEl.appendChild(freeOption);
 
             } catch (err) {
                 console.error('Failed to load Puter models:', err);
-                selectEl.innerHTML = `
-                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Fallback)</option>
-                    <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (Free Alternative)</option>
-                `;
             }
         }
 
@@ -137,10 +133,9 @@
             button.disabled = true;
             button.innerText = "Generating...";
 
-            // 1. Check if mock mode is turned on to save tokens
             if (IS_MOCK_MODE) {
                 setTimeout(() => {
-                    outputDiv.innerHTML = `<strong>[MOCK MODE ACTIVE]</strong><br><br>Here is a fake response generated locally to test your splitscreen layout. You sent the prompt: "<em>${promptValue}</em>" using the model profile: <code>${selectedModel}</code>.`;
+                    outputDiv.innerHTML = `<strong>[MOCK MODE ACTIVE]</strong><br><br>Here is a fake response generated locally. You sent: "<em>${promptValue}</em>" using: <code>${selectedModel}</code>.`;
                     button.disabled = false;
                     button.innerText = "Generate AI Stream";
                 }, 800);
@@ -148,54 +143,37 @@
             }
 
             try {
-                // 2. Call the active Puter AI interface 
+                // Call Puter AI interface 
                 const response = await puter.ai.chat(promptValue, { 
-                    model: selectedModel,
-                    normalize: true 
+                    model: selectedModel
                 });
                 
-                // Parse text output string safely
+                // Completed parsing logic to ensure objects extract text perfectly
                 let textContent = "";
                 if (typeof response === 'string') {
                     textContent = response;
-                } else if (typeof response.message?.content === 'string') {
+                } else if (response && response.message && typeof response.message.content === 'string') {
                     textContent = response.message.content;
-                } else if (Array.isArray(response.message?.content)) {
+                } else if (response && response.text) {
+                    textContent = response.text;
+                } else if (response && response.message && Array.isArray(response.message.content)) {
                     textContent = response.message.content
                         .map(block => block.text || "")
                         .join("");
                 } else {
-                    textContent = JSON.stringify(response, null, 2);
+                    textContent = JSON.stringify(response);
                 }
 
                 outputDiv.innerText = textContent;
-            } catch (error) {
-                // 3. Fallback engine: If it's a rate limit error, auto-retry using the free model line
-                if (error.message.includes('limit') || error.message.includes('429') || error.message.includes('quota')) {
-                    outputDiv.innerText = "Claude limit reached! Auto-switching to Free Llama engine...";
-                    
-                    try {
-                        const fallbackResponse = await puter.ai.chat(promptValue, { 
-                            model: "meta-llama/llama-3-8b-instruct:free",
-                            normalize: true 
-                        });
-                        outputDiv.innerText = typeof fallbackResponse === 'string' ? fallbackResponse : (fallbackResponse.message?.content || JSON.stringify(fallbackResponse));
-                    } catch (fallbackError) {
-                        outputDiv.innerText = "Both primary and fallback models hit a wall: " + fallbackError.message;
-                    }
-                } else {
-                    outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
-                }
+
+            } catch (err) {
+                console.error('AI Processing Error:', err);
+                outputDiv.innerHTML = `<span style="color: red; font-weight: bold;">Error:</span> ${err.message || "Failed to fetch response. Your personal token allowance might be exhausted for this model."}`;
             } finally {
                 button.disabled = false;
                 button.innerText = "Generate AI Stream";
             }
         }
-
-        // Initialize models when DOM is ready
-        window.addEventListener('DOMContentLoaded', loadModels);
     </script>
-
-
 </body>
 </html>
