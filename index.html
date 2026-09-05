@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI Splitscreen Portal (Puter.js)</title>
+    <!-- Puter.js SDK -->
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #fafafa; overflow: hidden; }
+        
+        /* Layout Grid */
+        .workspace { display: flex; height: 100vh; width: 100vw; }
+        
+        /* Left Sidebar Controls */
+        .control-panel { width: 350px; background: white; padding: 25px; border-right: 2px solid #e5e7eb; display: flex; flex-direction: column; justify-content: flex-start; z-index: 10; }
+        h2 { margin-top: 0; color: #d97706; font-size: 20px; }
+        label { font-weight: bold; font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; }
+        textarea { width: 100%; height: 150px; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; resize: none; margin-bottom: 15px; }
+        button { background: #d97706; color: white; border: none; padding: 14px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        button:hover { background: #b45309; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .instructions { margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5; padding: 12px; background: #f3f4f6; border-radius: 6px; }
+        
+        /* Right AI Screen Container */
+        .ai-frame-container { flex-grow: 1; height: 100%; background: #fff; position: relative; overflow-y: auto; padding: 25px; }
+        .placeholder-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #9ca3af; font-size: 16px; text-align: center; width: 80%; pointer-events: none; }
+        
+        /* Output Text Box */
+        #aiOutput { display: none; white-space: pre-wrap; font-size: 15px; line-height: 1.6; color: #1f2937; }
+    </style>
+</head>
+<body>
+
+    <div class="workspace">
+        <!-- Left Side Controller -->
+        <div class="control-panel">
+            <h2>Claude 3.5 Workspace</h2>
+            <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
+            
+            <label for="promptInput">Type Your AI Prompt:</label>
+            <textarea id="promptInput" placeholder="Ask Claude to generate a website layout, write complex scripts, explain theory..."></textarea>
+            
+            <button id="submitBtn" onclick="sendToClaude()">Generate Claude Stream</button>
+            
+            <div class="instructions">
+                <strong>💡 Puter.js active:</strong><br>
+                Uses the built-in <code>puter.ai.chat()</code> SDK directly inside the browser—no API keys or external server setups required.
+            </div>
+        </div>
+
+        <!-- Right Side AI Output Window -->
+        <div class="ai-frame-container">
+            <div id="fallbackMessage" class="placeholder-text">
+                Your direct Claude output workspace will render here instantly when you submit your prompt.
+            </div>
+            <div id="aiOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        async function sendToClaude() {
+            const promptValue = document.getElementById('promptInput').value.trim();
+            const outputDiv = document.getElementById('aiOutput');
+            const placeholder = document.getElementById('fallbackMessage');
+            const button = document.getElementById('submitBtn');
+
+            if (!promptValue) {
+                alert("Please enter a question or prompt inside the text box first!");
+                return;
+            }
+
+            placeholder.style.display = "none";
+            outputDiv.style.display = "block";
+            outputDiv.innerText = "Claude is thinking...";
+            button.disabled = true;
+            button.innerText = "Generating...";
+
+            try {
+                // Request response via Puter.js SDK
+                const response = await puter.ai.chat(promptValue, { model: 'claude-3-5-sonnet' });
+                
+                // Format output
+                outputDiv.innerText = typeof response === 'string' ? response : (response.message?.content || response.toString());
+            } catch (error) {
+                outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
+            } finally {
+                button.disabled = false;
+                button.innerText = "Generate Claude Stream";
+            }
+        }
+    </script>
+
+</body>
+</html>
