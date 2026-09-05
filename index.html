@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude AI Splitscreen Portal (Puter.js)</title>
+    <title>AI Splitscreen Portal (Puter.js)</title>
     <!-- Puter.js SDK -->
     <script src="https://js.puter.com/v2/"></script>
     <style>
@@ -37,39 +37,67 @@
     <div class="workspace">
         <!-- Left Side Controller -->
         <div class="control-panel">
-            <h2>Claude Workspace</h2>
+            <h2>AI Workspace</h2>
             <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
             
             <label for="modelSelect">Select Model:</label>
             <select id="modelSelect">
-                <option value="claude-fable-5-1">Claude Fable 5.1 (Flagship Reasoning)</option>
-                <option value="claude-opus-5">Claude Opus 5 (Agentic & High Performance)</option>
-                <option value="claude-sonnet-5" selected>Claude Sonnet 5 (Balanced & Fast)</option>
-                <option value="claude-haiku-4-5">Claude Haiku 4.5 (Lightweight)</option>
+                <option value="">Loading available models...</option>
             </select>
 
             <label for="promptInput">Type Your AI Prompt:</label>
-            <textarea id="promptInput" placeholder="Ask Claude to generate a website layout, write complex scripts, explain theory..."></textarea>
+            <textarea id="promptInput" placeholder="Ask AI to generate a website layout, write complex scripts, explain theory..."></textarea>
             
-            <button id="submitBtn" onclick="sendToClaude()">Generate Claude Stream</button>
+            <button id="submitBtn" onclick="sendToAI()">Generate AI Stream</button>
             
             <div class="instructions">
-                <strong>💡 Puter.js active:</strong><br>
-                Uses the built-in <code>puter.ai.chat()</code> SDK directly inside the browser—no API keys or external server setups required.
+                <strong>💡 Dynamic Models Active:</strong><br>
+                Populates all models registered in Puter.js and passes your selected model ID directly into <code>puter.ai.chat()</code>.
             </div>
         </div>
 
         <!-- Right Side AI Output Window -->
         <div class="ai-frame-container">
             <div id="fallbackMessage" class="placeholder-text">
-                Your direct Claude output workspace will render here instantly when you submit your prompt.
+                Your direct AI output workspace will render here instantly when you submit your prompt.
             </div>
             <div id="aiOutput"></div>
         </div>
     </div>
 
     <script>
-        async function sendToClaude() {
+        // Dynamically load models on page load
+        async function loadModels() {
+            const selectEl = document.getElementById('modelSelect');
+            try {
+                // Fetch models dynamically via Puter.js
+                const models = await puter.ai.listModels();
+                selectEl.innerHTML = ''; // Clear initial placeholder
+
+                if (!models || models.length === 0) {
+                    selectEl.innerHTML = '<option value="">No models found</option>';
+                    return;
+                }
+
+                // Populate all retrieved models into the select dropdown
+                models.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m.id;
+                    option.textContent = m.name ? `${m.name} (${m.id})` : m.id;
+                    
+                    // Default to claude-sonnet-5 if present
+                    if (m.id === 'claude-sonnet-5') {
+                        option.selected = true;
+                    }
+                    selectEl.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Failed to load Puter models:', err);
+                selectEl.innerHTML = '<option value="claude-sonnet-5">Claude Sonnet 5 (Fallback)</option>';
+            }
+        }
+
+        async function sendToAI() {
             const promptValue = document.getElementById('promptInput').value.trim();
             const selectedModel = document.getElementById('modelSelect').value;
             const outputDiv = document.getElementById('aiOutput');
@@ -83,18 +111,18 @@
 
             placeholder.style.display = "none";
             outputDiv.style.display = "block";
-            outputDiv.innerText = "Claude is thinking...";
+            outputDiv.innerText = "AI is thinking...";
             button.disabled = true;
             button.innerText = "Generating...";
 
             try {
-                // Call Puter.js using the user-selected model
+                // Pass chosen model ID dynamically
                 const response = await puter.ai.chat(promptValue, { 
                     model: selectedModel,
                     normalize: true 
                 });
                 
-                // Helper function to unpack string content
+                // Parse text output string safely
                 let textContent = "";
                 if (typeof response === 'string') {
                     textContent = response;
@@ -113,9 +141,12 @@
                 outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
             } finally {
                 button.disabled = false;
-                button.innerText = "Generate Claude Stream";
+                button.innerText = "Generate AI Stream";
             }
         }
+
+        // Initialize models when DOM is ready
+        window.addEventListener('DOMContentLoaded', loadModels);
     </script>
 
 </body>
