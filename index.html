@@ -36,7 +36,7 @@
     <div class="workspace">
         <!-- Left Side Controller -->
         <div class="control-panel">
-            <h2>Claude 3.5 Workspace</h2>
+            <h2>Claude Workspace</h2>
             <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
             
             <label for="promptInput">Type Your AI Prompt:</label>
@@ -78,10 +78,10 @@
             button.innerText = "Generating...";
 
             try {
-                // Request response via Puter.js SDK
-                const response = await puter.ai.chat(promptValue, { model: 'claude-3-5-sonnet' });
+                // Fixed model string to match Puter.js model identifier
+                const response = await puter.ai.chat(promptValue, { model: 'claude-sonnet-3-5' });
                 
-                // Format output
+                // Extract and print text response
                 outputDiv.innerText = typeof response === 'string' ? response : (response.message?.content || response.toString());
             } catch (error) {
                 outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
