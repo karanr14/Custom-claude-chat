@@ -1,394 +1,122 @@
-```html
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Link Depot</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>">
-<style>
-/* ---------- THEME TOKENS ---------- */
-:root{
-  --bg1:#0b1020; --bg2:#131a35; --bg3:#1b1040;
-  --glass:rgba(255,255,255,.06);
-  --glass-strong:rgba(255,255,255,.1);
-  --border:rgba(255,255,255,.12);
-  --text:#eef1ff; --muted:#9aa3c7;
-  --accent:#7c5cff; --accent2:#00d4ff; --accent3:#ff5c9d;
-  --shadow:0 10px 40px rgba(0,0,0,.45);
-}
-[data-theme="light"]{
-  --bg1:#eef1fb; --bg2:#e3e9ff; --bg3:#f6e9ff;
-  --glass:rgba(255,255,255,.65);
-  --glass-strong:rgba(255,255,255,.85);
-  --border:rgba(20,20,60,.12);
-  --text:#161a33; --muted:#5c6488;
-  --shadow:0 10px 30px rgba(60,60,120,.18);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-  font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
-  color:var(--text); background:var(--bg1);
-  min-height:100vh; overflow-x:hidden;
-  transition:background .4s,color .4s;
-}
-/* ---------- ANIMATED BACKDROP ---------- */
-.bg{position:fixed;inset:0;z-index:-2;background:
-  radial-gradient(circle at 15% 20%,var(--bg3),transparent 45%),
-  radial-gradient(circle at 85% 15%,var(--bg2),transparent 50%),
-  radial-gradient(circle at 50% 90%,var(--bg2),transparent 55%),var(--bg1);
-  transition:background .4s}
-.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.35;z-index:-1;animation:float 18s ease-in-out infinite}
-.orb.a{width:420px;height:420px;background:var(--accent);top:-120px;left:-80px}
-.orb.b{width:380px;height:380px;background:var(--accent2);bottom:-140px;right:-60px;animation-delay:-6s}
-.orb.c{width:300px;height:300px;background:var(--accent3);top:40%;left:60%;animation-delay:-12s}
-@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.15)}66%{transform:translate(-40px,50px) scale(.9)}}
-
-/* ---------- LAYOUT ---------- */
-.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
-.logo{display:flex;align-items:center;gap:12px;font-size:26px;font-weight:800;letter-spacing:-.5px}
-.logo .mark{
-  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 8px 24px rgba(124,92,255,.45)}
-.logo span.grad{background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
-  -webkit-background-clip:text;background-clip:text;color:transparent;background-size:200%;animation:shift 6s linear infinite}
-@keyframes shift{to{background-position:200%}}
-.spacer{flex:1}
-
-/* ---------- CONTROLS ---------- */
-.btn{
-  border:1px solid var(--border);background:var(--glass);color:var(--text);
-  padding:11px 16px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;
-  display:inline-flex;align-items:center;gap:8px;backdrop-filter:blur(12px);
-  transition:.2s transform,.2s background,.2s box-shadow}
-.btn:hover{background:var(--glass-strong);transform:translateY(-2px);box-shadow:var(--shadow)}
-.btn:active{transform:translateY(0)}
-.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;
-  box-shadow:0 8px 24px rgba(124,92,255,.4)}
-.btn.danger{color:#ff7a7a}
-.icon-btn{width:42px;height:42px;padding:0;justify-content:center;font-size:17px}
-
-.searchbar{position:relative;flex:1 1 280px;min-width:220px}
-.searchbar input{
-  width:100%;padding:13px 16px 13px 44px;border-radius:14px;font-size:15px;
-  background:var(--glass);border:1px solid var(--border);color:var(--text);
-  backdrop-filter:blur(12px);outline:none;transition:.2s}
-.searchbar input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(124,92,255,.18)}
-.searchbar .si{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.6}
-.searchbar kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);color:var(--muted)}
-
-/* ---------- CHIPS ---------- */
-.chips{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0 20px}
-.chip{
-  padding:8px 15px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;
-  background:var(--glass);border:1px solid var(--border);color:var(--muted);
-  backdrop-filter:blur(10px);transition:.2s;user-select:none}
-.chip:hover{color:var(--text);transform:translateY(-2px)}
-.chip.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;
-  box-shadow:0 6px 18px rgba(124,92,255,.35)}
-.chip .cnt{opacity:.7;font-size:11px;margin-left:5px}
-
-/* ---------- GRID + CARDS ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
-.card{
-  position:relative;padding:18px;border-radius:18px;cursor:pointer;
-  background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(14px);
-  transition:.25s transform,.25s box-shadow,.25s border-color;
-  animation:pop .35s cubic-bezier(.2,.9,.3,1.4) backwards;overflow:hidden}
-@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}}
-.card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;
-  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));opacity:0;transition:.25s}
-.card:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:rgba(124,92,255,.5)}
-.card:hover::before{opacity:1}
-.card.dragging{opacity:.4;transform:scale(.96)}
-.card.over{border-color:var(--accent2);border-style:dashed}
-.ctop{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.fav{width:42px;height:42px;border-radius:12px;flex:none;display:grid;place-items:center;
-  background:var(--glass-strong);border:1px solid var(--border);font-size:19px;overflow:hidden}
-.fav img{width:24px;height:24px;border-radius:5px}
-.ctitle{font-weight:700;font-size:15.5px;line-height:1.3;word-break:break-word}
-.curl{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cnote{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
-  background:rgba(124,92,255,.16);color:var(--accent);border:1px solid rgba(124,92,255,.3)}
-[data-theme=light] .tag{color:#5a3fd6}
-.acts{position:absolute;top:12px;right:12px;display:flex;gap:5px;opacity:0;transition:.2s}
-.card:hover .acts,.card:focus-within .acts{opacity:1}
-.mini{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;cursor:pointer;font-size:13px;
-  background:var(--glass-strong);border:1px solid var(--border);color:var(--muted);transition:.15s}
-.mini:hover{color:var(--text);transform:scale(1.12)}
-.star{position:absolute;top:12px;left:12px;font-size:14px;opacity:0;transition:.2s}
-.card.pinned .star{opacity:1}
-.card.pinned{border-color:rgba(255,196,0,.4);background:linear-gradient(160deg,rgba(255,196,0,.07),var(--glass))}
-.card.pinned .ctop{padding-left:20px}
-
-/* ---------- EMPTY / STATS ---------- */
-.empty{text-align:center;padding:80px 20px;color:var(--muted)}
-.empty .e{font-size:64px;margin-bottom:16px;animation:float2 3s ease-in-out infinite}
-@keyframes float2{50%{transform:translateY(-12px)}}
-.empty h3{color:var(--text);font-size:20px;margin-bottom:8px}
-.stats{font-size:12.5px;color:var(--muted);margin:6px 0 0}
-
-/* ---------- MODAL ---------- */
-.overlay{position:fixed;inset:0;background:rgba(5,7,20,.65);backdrop-filter:blur(6px);
-  display:none;place-items:center;z-index:50;padding:20px;animation:fade .2s}
-.overlay.show{display:grid}
-@keyframes fade{from{opacity:0}}
-.modal{width:100%;max-width:480px;border-radius:22px;padding:26px;
-  background:linear-gradient(160deg,var(--glass-strong),var(--glass));
-  border:1px solid var(--border);backdrop-filter:blur(24px);box-shadow:var(--shadow);
-  animation:up .3s cubic-bezier(.2,.9,.3,1.3);max-height:90vh;overflow:auto}
-[data-theme=dark] .modal{background:linear-gradient(160deg,#1c2242,#151a33)}
-@keyframes up{from{opacity:0;transform:translateY(24px) scale(.97)}}
-.modal h2{font-size:20px;margin-bottom:18px;display:flex;align-items:center;gap:9px}
-label{display:block;font-size:12px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.6px;margin:14px 0 6px}
-input[type=text],input[type=url],textarea,select{
-  width:100%;padding:12px 14px;border-radius:12px;font-size:14px;font-family:inherit;
-  background:var(--glass);border:1px solid var(--border);color:var(--text);outline:none;transition:.2s}
-input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(124,92,255,.16)}
-textarea{resize:vertical;min-height:70px}
-select option{background:#1a2040;color:#fff}
-[data-theme=light] select option{background:#fff;color:#161a33}
-.row{display:flex;gap:10px}.row>*{flex:1}
-.mfoot{display:flex;gap:10px;margin-top:22px}
-.mfoot .btn{flex:1;justify-content:center}
-
-/* ---------- TOAST ---------- */
-.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);
-  padding:13px 22px;border-radius:14px;font-size:14px;font-weight:600;z-index:99;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
-  box-shadow:0 12px 30px rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-@media(max-width:560px){.logo{font-size:21px}.wrap{padding:18px 14px 70px}.grid{grid-template-columns:1fr}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AI Splitscreen Portal (Puter.js)</title>
+    <!-- Puter.js SDK -->
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #fafafa; overflow: hidden; }
+        
+        /* Layout Grid */
+        .workspace { display: flex; height: 100vh; width: 100vw; }
+        
+        /* Left Sidebar Controls */
+        .control-panel { width: 350px; background: white; padding: 25px; border-right: 2px solid #e5e7eb; display: flex; flex-direction: column; justify-content: flex-start; z-index: 10; }
+        h2 { margin-top: 0; color: #d97706; font-size: 20px; }
+        label { font-weight: bold; font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; }
+        select, textarea { width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; }
+        textarea { height: 150px; resize: none; }
+        button { background: #d97706; color: white; border: none; padding: 14px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        button:hover { background: #b45309; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .instructions { margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5; padding: 12px; background: #f3f4f6; border-radius: 6px; }
+        
+        /* Right AI Screen Container */
+        .ai-frame-container { flex-grow: 1; height: 100%; background: #fff; position: relative; overflow-y: auto; padding: 25px; }
+        .placeholder-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #9ca3af; font-size: 16px; text-align: center; width: 80%; pointer-events: none; }
+        
+        /* Output Text Box */
+        #aiOutput { display: none; white-space: pre-wrap; font-size: 15px; line-height: 1.6; color: #1f2937; }
+    </style>
 </head>
 <body>
-<div class="bg"></div><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
 
-<div class="wrap">
-  <header>
-    <div class="logo">
-      <div class="mark">🔗</div>
-      <div>
-        <div>Link <span class="grad">Depot</span></div>
-        <div class="stats" id="stats">0 links</div>
-      </div>
+    <div class="workspace">
+        <!-- Left Side Controller -->
+        <div class="control-panel">
+            <h2>Claude Workspace</h2>
+            <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
+            
+            <label for="modelSelect">Select Model:</label>
+            <select id="modelSelect">
+                <option value="claude-fable-5-1">Claude Fable 5.1 (Flagship Reasoning)</option>
+                <option value="claude-opus-5">Claude Opus 5 (Agentic & High Performance)</option>
+                <option value="claude-sonnet-5" selected>Claude Sonnet 5 (Balanced & Fast)</option>
+                <option value="claude-haiku-4-5">Claude Haiku 4.5 (Lightweight)</option>
+            </select>
+
+            <label for="promptInput">Type Your AI Prompt:</label>
+            <textarea id="promptInput" placeholder="Ask Claude to generate a website layout, write complex scripts, explain theory..."></textarea>
+            
+            <button id="submitBtn" onclick="sendToClaude()">Generate Claude Stream</button>
+            
+            <div class="instructions">
+                <strong>💡 Puter.js active:</strong><br>
+                Uses the built-in <code>puter.ai.chat()</code> SDK directly inside the browser—no API keys or external server setups required.
+            </div>
+        </div>
+
+        <!-- Right Side AI Output Window -->
+        <div class="ai-frame-container">
+            <div id="fallbackMessage" class="placeholder-text">
+                Your direct Claude output workspace will render here instantly when you submit your prompt.
+            </div>
+            <div id="aiOutput"></div>
+        </div>
     </div>
-    <div class="spacer"></div>
-    <div class="searchbar">
-      <span class="si">🔍</span>
-      <input id="search" type="text" placeholder="Search links, tags, notes…" autocomplete="off">
-      <kbd>/</kbd>
-    </div>
-    <button class="btn primary" onclick="openModal()">＋ Add Link</button>
-    <button class="btn icon-btn" id="themeBtn" title="Toggle theme" onclick="toggleTheme()">🌙</button>
-    <button class="btn icon-btn" title="Export backup" onclick="exportData()">⬇</button>
-    <button class="btn icon-btn" title="Import backup" onclick="fileIn.click()">⬆</button>
-    <input type="file" id="fileIn" accept="application/json" hidden>
-  </header>
 
-  <div class="chips" id="chips"></div>
-  <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" style="display:none">
-    <div class="e">🗂️</div>
-    <h3>Nothing here yet</h3>
-    <p>Click <b>＋ Add Link</b> to start building your depot.</p>
-  </div>
-</div>
+    <script>
+        async function sendToClaude() {
+            const promptValue = document.getElementById('promptInput').value.trim();
+            const selectedModel = document.getElementById('modelSelect').value;
+            const outputDiv = document.getElementById('aiOutput');
+            const placeholder = document.getElementById('fallbackMessage');
+            const button = document.getElementById('submitBtn');
 
-<!-- MODAL -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2 id="mTitle">✨ Add a Link</h2>
-    <input type="hidden" id="fId">
-    <label>URL *</label>
-    <input type="url" id="fUrl" placeholder="https://example.com">
-    <label>Title</label>
-    <input type="text" id="fTitle" placeholder="Leave blank to auto-fill from URL">
-    <div class="row">
-      <div>
-        <label>Category</label>
-        <input type="text" id="fCat" list="catList" placeholder="e.g. Work">
-        <datalist id="catList"></datalist>
-      </div>
-      <div>
-        <label>Icon (emoji)</label>
-        <input type="text" id="fIcon" placeholder="auto" maxlength="4">
-      </div>
-    </div>
-    <label>Notes</label>
-    <textarea id="fNote" placeholder="Optional description…"></textarea>
-    <div class="mfoot">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn primary" onclick="saveLink()">Save Link</button>
-    </div>
-  </div>
-</div>
+            if (!promptValue) {
+                alert("Please enter a question or prompt inside the text box first!");
+                return;
+            }
 
-<div class="toast" id="toast"></div>
+            placeholder.style.display = "none";
+            outputDiv.style.display = "block";
+            outputDiv.innerText = "Claude is thinking...";
+            button.disabled = true;
+            button.innerText = "Generating...";
 
-<script>
-/* ============ STATE ============ */
-const KEY='linkdepot.v1';
-let links = JSON.parse(localStorage.getItem(KEY) || 'null') || seed();
-let filter='All', query='';
+            try {
+                // Call Puter.js using the user-selected model
+                const response = await puter.ai.chat(promptValue, { 
+                    model: selectedModel,
+                    normalize: true 
+                });
+                
+                // Helper function to unpack string content
+                let textContent = "";
+                if (typeof response === 'string') {
+                    textContent = response;
+                } else if (typeof response.message?.content === 'string') {
+                    textContent = response.message.content;
+                } else if (Array.isArray(response.message?.content)) {
+                    textContent = response.message.content
+                        .map(block => block.text || "")
+                        .join("");
+                } else {
+                    textContent = JSON.stringify(response, null, 2);
+                }
 
-function seed(){return[
- {id:id(),url:'https://github.com',title:'GitHub',cat:'Dev',icon:'',note:'Code repositories & projects',pin:1},
- {id:id(),url:'https://chatgpt.com',title:'ChatGPT',cat:'AI',icon:'',note:'AI assistant',pin:0},
- {id:id(),url:'https://mail.google.com',title:'Gmail',cat:'Daily',icon:'',note:'Inbox',pin:1},
- {id:id(),url:'https://youtube.com',title:'YouTube',cat:'Media',icon:'',note:'Videos & tutorials',pin:0},
- {id:id(),url:'https://developer.mozilla.org',title:'MDN Web Docs',cat:'Dev',icon:'',note:'Web reference documentation',pin:0},
- {id:id(),url:'https://drive.google.com',title:'Google Drive',cat:'Daily',icon:'',note:'Cloud file storage',pin:0}
-];}
-function id(){return Math.random().toString(36).slice(2,10)}
-function save(){localStorage.setItem(KEY,JSON.stringify(links));render()}
+                outputDiv.innerText = textContent;
+            } catch (error) {
+                outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
+            } finally {
+                button.disabled = false;
+                button.innerText = "Generate Claude Stream";
+            }
+        }
+    </script>
 
-/* ============ HELPERS ============ */
-const $=s=>document.querySelector(s);
-function host(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch{return u}}
-function normalize(u){u=u.trim();if(!u)return'';return /^https?:\/\//i.test(u)?u:'https://'+u}
-function favicon(u){try{return `https://www.google.com/s2/favicons?domain=${new URL(u).hostname}&sz=64`}catch{return''}}
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200)}
-
-/* ============ RENDER ============ */
-function render(){
-  // chips
-  const cats=[...new Set(links.map(l=>l.cat||'Uncategorized'))].sort();
-  const chips=$('#chips');
-  chips.innerHTML=`<div class="chip ${filter==='All'?'active':''}" onclick="setFilter('All')">🌐 All<span class="cnt">${links.length}</span></div>
-   <div class="chip ${filter==='★'?'active':''}" onclick="setFilter('★')">⭐ Pinned<span class="cnt">${links.filter(l=>l.pin).length}</span></div>`
-   + cats.map(c=>`<div class="chip ${filter===c?'active':''}" onclick="setFilter('${esc(c).replace(/'/g,"\\'")}')">${esc(c)}<span class="cnt">${links.filter(l=>(l.cat||'Uncategorized')===c).length}</span></div>`).join('');
-
-  // datalist
-  $('#catList').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
-
-  // filter
-  const q=query.toLowerCase();
-  let list=links.filter(l=>{
-    const inCat = filter==='All' || (filter==='★'? l.pin : (l.cat||'Uncategorized')===filter);
-    const inQ = !q || (l.title+' '+l.url+' '+(l.note||'')+' '+(l.cat||'')).toLowerCase().includes(q);
-    return inCat && inQ;
-  });
-  list.sort((a,b)=>(b.pin?1:0)-(a.pin?1:0));
-
-  $('#stats').textContent=`${links.length} link${links.length!==1?'s':''} · ${cats.length} categor${cats.length!==1?'ies':'y'}`;
-  $('#empty').style.display=list.length?'none':'block';
-
-  $('#grid').innerHTML=list.map((l,i)=>`
-   <div class="card ${l.pin?'pinned':''}" draggable="true" data-id="${l.id}" style="animation-delay:${i*30}ms" onclick="go(event,'${l.id}')">
-     <div class="star">⭐</div>
-     <div class="acts">
-       <div class="mini" title="Pin" onclick="event.stopPropagation();pin('${l.id}')">${l.pin?'📌':'📍'}</div>
-       <div class="mini" title="Copy URL" onclick="event.stopPropagation();copy('${l.id}')">⧉</div>
-       <div class="mini" title="Edit" onclick="event.stopPropagation();openModal('${l.id}')">✎</div>
-       <div class="mini" title="Delete" onclick="event.stopPropagation();del('${l.id}')">🗑</div>
-     </div>
-     <div class="ctop">
-       <div class="fav">${l.icon? esc(l.icon) : `<img src="${favicon(l.url)}" onerror="this.replaceWith(document.createTextNode('🔗'))">`}</div>
-       <div style="min-width:0">
-         <div class="ctitle">${esc(l.title||host(l.url))}</div>
-         <div class="curl">${esc(host(l.url))}</div>
-       </div>
-     </div>
-     ${l.note?`<div class="cnote">${esc(l.note)}</div>`:''}
-     <div class="cfoot"><span class="tag">${esc(l.cat||'Uncategorized')}</span></div>
-   </div>`).join('');
-  dnd();
-}
-
-function setFilter(c){filter=c;render()}
-function go(e,i){const l=links.find(x=>x.id===i);if(l)window.open(normalize(l.url),'_blank','noopener')}
-function pin(i){const l=links.find(x=>x.id===i);l.pin=l.pin?0:1;save();toast(l.pin?'📌 Pinned':'Unpinned')}
-function copy(i){navigator.clipboard.writeText(normalize(links.find(x=>x.id===i).url));toast('📋 URL copied')}
-function del(i){const l=links.find(x=>x.id===i);if(confirm(`Delete "${l.title||host(l.url)}"?`)){links=links.filter(x=>x.id!==i);save();toast('🗑 Deleted')}}
-
-/* ============ MODAL ============ */
-function openModal(i){
-  $('#overlay').classList.add('show');
-  if(i){const l=links.find(x=>x.id===i);
-    $('#mTitle').textContent='✎ Edit Link';$('#fId').value=l.id;$('#fUrl').value=l.url;
-    $('#fTitle').value=l.title||'';$('#fCat').value=l.cat||'';$('#fIcon').value=l.icon||'';$('#fNote').value=l.note||'';
-  }else{
-    $('#mTitle').textContent='✨ Add a Link';
-    ['fId','fUrl','fTitle','fCat','fIcon','fNote'].forEach(x=>$('#'+x).value='');
-  }
-  setTimeout(()=>$('#fUrl').focus(),60);
-}
-function closeModal(){$('#overlay').classList.remove('show')}
-function saveLink(){
-  const url=normalize($('#fUrl').value);
-  if(!url){toast('⚠️ URL required');$('#fUrl').focus();return}
-  const data={url,title:$('#fTitle').value.trim()||host(url).split('.')[0].replace(/^\w/,c=>c.toUpperCase()),
-    cat:$('#fCat').value.trim()||'Uncategorized',icon:$('#fIcon').value.trim(),note:$('#fNote').value.trim()};
-  const eid=$('#fId').value;
-  if(eid){Object.assign(links.find(x=>x.id===eid),data);toast('✅ Updated')}
-  else{links.unshift({id:id(),pin:0,...data});toast('✅ Link added')}
-  closeModal();save();
-}
-$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeModal()};
-
-/* ============ DRAG & DROP REORDER ============ */
-function dnd(){
-  let src=null;
-  document.querySelectorAll('.card').forEach(c=>{
-    c.ondragstart=e=>{src=c;c.classList.add('dragging');e.dataTransfer.effectAllowed='move'};
-    c.ondragend=()=>{c.classList.remove('dragging');document.querySelectorAll('.card').forEach(x=>x.classList.remove('over'))};
-    c.ondragover=e=>{e.preventDefault();if(c!==src)c.classList.add('over')};
-    c.ondragleave=()=>c.classList.remove('over');
-    c.ondrop=e=>{e.preventDefault();c.classList.remove('over');
-      if(!src||src===c)return;
-      const a=links.findIndex(x=>x.id===src.dataset.id), b=links.findIndex(x=>x.id===c.dataset.id);
-      const[m]=links.splice(a,1);links.splice(b,0,m);save();};
-  });
-}
-
-/* ============ IMPORT / EXPORT ============ */
-function exportData(){
-  const blob=new Blob([JSON.stringify(links,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='link-depot-'+new Date().toISOString().slice(0,10)+'.json';a.click();
-  toast('⬇ Backup exported');
-}
-$('#fileIn').onchange=e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{try{
-      const d=JSON.parse(r.result);
-      if(!Array.isArray(d))throw 0;
-      const existing=new Set(links.map(l=>l.url));
-      let n=0;d.forEach(l=>{if(l.url&&!existing.has(l.url)){links.push({id:id(),pin:0,cat:'Uncategorized',...l,id:id()});n++}});
-      save();toast(`⬆ Imported ${n} new link${n!==1?'s':''}`);
-    }catch{toast('⚠️ Invalid file')}};
-  r.readAsText(f);e.target.value='';
-};
-
-/* ============ THEME + SHORTCUTS ============ */
-function toggleTheme(){
-  const d=document.documentElement, next=d.dataset.theme==='dark'?'light':'dark';
-  d.dataset.theme=next;localStorage.setItem('linkdepot.theme',next);
-  $('#themeBtn').textContent=next==='dark'?'🌙':'☀️';
-}
-(function(){const t=localStorage.getItem('linkdepot.theme')||'dark';
-  document.documentElement.dataset.theme=t;$('#themeBtn').textContent=t==='dark'?'🌙':'☀️';})();
-
-$('#search').oninput=e=>{query=e.target.value;render()};
-document.onkeydown=e=>{
-  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();$('#search').focus()}
-  if(e.key==='Escape'){closeModal();$('#search').blur()}
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&$('#overlay').classList.contains('show'))saveLink();
-  if(e.key.toLowerCase()==='n'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName==='BODY'){e.preventDefault();openModal()}
-};
-
-render();
-</script>
 </body>
 </html>
