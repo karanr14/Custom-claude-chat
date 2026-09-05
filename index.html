@@ -78,8 +78,8 @@
             button.innerText = "Generating...";
 
             try {
-                // Fixed model string to match Puter.js model identifier
-                const response = await puter.ai.chat(promptValue, { model: 'claude-sonnet-3-5' });
+                // Updated to an active Puter.js model ID
+                const response = await puter.ai.chat(promptValue, { model: 'claude-sonnet-5' });
                 
                 // Extract and print text response
                 outputDiv.innerText = typeof response === 'string' ? response : (response.message?.content || response.toString());
