@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Splitscreen Portal (Puter.js)</title>
     <!-- Puter.js SDK -->
-    <script src="https://js.puter.com/v2/"></script>
+    <script src="https://puter.com"></script>
     <style>
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #fafafa; overflow: hidden; }
@@ -22,6 +22,10 @@
         button { background: #d97706; color: white; border: none; padding: 14px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
         button:hover { background: #b45309; }
         button:disabled { background: #9ca3af; cursor: not-allowed; }
+        
+        /* Dynamic Cost Alert Box */
+        .cost-warning { display: none; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; font-weight: 500; }
+        
         .instructions { margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5; padding: 12px; background: #f3f4f6; border-radius: 6px; }
         
         /* Right AI Screen Container */
@@ -41,11 +45,13 @@
             <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
             
             <label for="modelSelect">Select Model:</label>
-            <select id="modelSelect">
-                <!-- Hardcoded unmetered free options + loaded options -->
+            <select id="modelSelect" onchange="checkModelCost()">
                 <option value="google/gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
                 <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (100% Free Fallback)</option>
             </select>
+
+            <!-- Cost Warning Banner -->
+            <div id="costWarning" class="cost-warning"></div>
 
             <label for="promptInput">Type Your AI Prompt:</label>
             <textarea id="promptInput" placeholder="Ask AI to generate a website layout, write complex scripts, explain theory..."></textarea>
@@ -53,8 +59,8 @@
             <button id="submitBtn" onclick="sendToAI()">Generate AI Stream</button>
             
             <div class="instructions">
-                <strong>💡 Dynamic Models Active:</strong><br>
-                Populates all models registered in Puter.js and passes your selected model ID directly into <code>puter.ai.chat()</code>.
+                <strong>💡 Safeguards Active:</strong><br>
+                Expensive variants (Opus, Fable) are filtered automatically to protect your 1,000 credit allowance.
             </div>
         </div>
 
@@ -72,7 +78,7 @@
         // Set this to true to see dummy text and completely freeze your token/limit usage!
         const IS_MOCK_MODE = false; 
 
-        // Trigger loading models when the document is ready
+        // Trigger loading models safely when window builds
         window.addEventListener('DOMContentLoaded', loadModels);
 
         async function loadModels() {
@@ -80,10 +86,7 @@
             try {
                 if (IS_MOCK_MODE) return;
 
-                // Fetch models dynamically via Puter.js
                 const models = await puter.ai.listModels();
-                
-                // Clear out defaults but preserve the free structures
                 selectEl.innerHTML = ''; 
 
                 if (!models || models.length === 0) {
@@ -91,27 +94,52 @@
                     return;
                 }
 
-                // Populate models and force-label the ones that burn heavy tokens
                 models.forEach(m => {
+                    const modelId = m.id.toLowerCase();
+                    
+                    // 🛡️ WORKAROUND 1: Filter out heavy credit-draining premium tiers completely
+                    if (modelId.includes('opus') || modelId.includes('fable') || modelId.includes('gpt-4-turbo')) {
+                        console.log(`Skipped heavy model to save credits: ${m.id}`);
+                        return; 
+                    }
+
                     const option = document.createElement('option');
                     option.value = m.id;
                     option.textContent = m.name ? `${m.name} (${m.id})` : m.id;
                     
-                    // Check if it's our target model
+                    // Set cheap, fast Gemini 2.5 Flash as the standard default
                     if (m.id === 'google/gemini-2.5-flash') {
                         option.selected = true;
                     }
                     selectEl.appendChild(option);
                 });
 
-                // Add a guaranteed 100% free unmetered endpoint option
+                // Inject a guaranteed unmetered tier to the bottom
                 const freeOption = document.createElement('option');
                 freeOption.value = "meta-llama/llama-3-8b-instruct:free";
                 freeOption.textContent = "Llama 3 8B (100% Free OpenRouter Tier)";
                 selectEl.appendChild(freeOption);
 
+                // Run an initial check on the default selected model
+                checkModelCost();
+
             } catch (err) {
                 console.error('Failed to load Puter models:', err);
+            }
+        }
+
+        // 🛡️ WORKAROUND 2: Display dynamic alert if a moderately premium model is highlighted
+        function checkModelCost() {
+            const selectEl = document.getElementById('modelSelect');
+            const warningEl = document.getElementById('costWarning');
+            const selectedModel = selectEl.value.toLowerCase();
+
+            // Check if it's a paid tier model (e.g. standard Claude Sonnet or GPT-4o)
+            if ((selectedModel.includes('claude') || selectedModel.includes('gpt')) && !selectedModel.includes('free')) {
+                warningEl.style.display = "block";
+                warningEl.innerHTML = "⚠️ <strong>Premium Model Selected:</strong> This request consumes high credits. Use a free fallback model to preserve your remaining credits.";
+            } else {
+                warningEl.style.display = "none";
             }
         }
 
@@ -135,7 +163,7 @@
 
             if (IS_MOCK_MODE) {
                 setTimeout(() => {
-                    outputDiv.innerHTML = `<strong>[MOCK MODE ACTIVE]</strong><br><br>Here is a fake response generated locally. You sent: "<em>${promptValue}</em>" using: <code>${selectedModel}</code>.`;
+                    outputDiv.innerHTML = `<strong>[MOCK MODE ACTIVE]</strong><br><br>Local testing layout response for prompt: "<em>${promptValue}</em>" via <code>${selectedModel}</code>.`;
                     button.disabled = false;
                     button.innerText = "Generate AI Stream";
                 }, 800);
@@ -143,12 +171,11 @@
             }
 
             try {
-                // Call Puter AI interface 
                 const response = await puter.ai.chat(promptValue, { 
                     model: selectedModel
                 });
                 
-                // Completed parsing logic to ensure objects extract text perfectly
+                // Clean response object text extraction
                 let textContent = "";
                 if (typeof response === 'string') {
                     textContent = response;
@@ -168,7 +195,7 @@
 
             } catch (err) {
                 console.error('AI Processing Error:', err);
-                outputDiv.innerHTML = `<span style="color: red; font-weight: bold;">Error:</span> ${err.message || "Failed to fetch response. Your personal token allowance might be exhausted for this model."}`;
+                outputDiv.innerHTML = `<span style="color: red; font-weight: bold;">Usage Error:</span> ${err.message || "Failed to complete request. Please switch to the Llama 3 Free Fallback."}`;
             } finally {
                 button.disabled = false;
                 button.innerText = "Generate AI Stream";
