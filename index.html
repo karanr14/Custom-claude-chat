@@ -78,11 +78,27 @@
             button.innerText = "Generating...";
 
             try {
-                // Updated to an active Puter.js model ID
-                const response = await puter.ai.chat(promptValue, { model: 'claude-sonnet-5' });
+                // Pass normalize: true to force string output format
+                const response = await puter.ai.chat(promptValue, { 
+                    model: 'claude-sonnet-5',
+                    normalize: true 
+                });
                 
-                // Extract and print text response
-                outputDiv.innerText = typeof response === 'string' ? response : (response.message?.content || response.toString());
+                // Helper function to unpack string content from Puter.js response
+                let textContent = "";
+                if (typeof response === 'string') {
+                    textContent = response;
+                } else if (typeof response.message?.content === 'string') {
+                    textContent = response.message.content;
+                } else if (Array.isArray(response.message?.content)) {
+                    textContent = response.message.content
+                        .map(block => block.text || "")
+                        .join("");
+                } else {
+                    textContent = JSON.stringify(response, null, 2);
+                }
+
+                outputDiv.innerText = textContent;
             } catch (error) {
                 outputDiv.innerText = "An error occurred with Puter.js: " + error.message;
             } finally {
