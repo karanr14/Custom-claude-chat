@@ -1,206 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Splitscreen Portal (Puter.js)</title>
-    <!-- Puter.js SDK -->
-    <script src="https://puter.com"></script>
-    <style>
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #fafafa; overflow: hidden; }
-        
-        /* Layout Grid */
-        .workspace { display: flex; height: 100vh; width: 100vw; }
-        
-        /* Left Sidebar Controls */
-        .control-panel { width: 350px; background: white; padding: 25px; border-right: 2px solid #e5e7eb; display: flex; flex-direction: column; justify-content: flex-start; z-index: 10; }
-        h2 { margin-top: 0; color: #d97706; font-size: 20px; }
-        label { font-weight: bold; font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; }
-        select, textarea { width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; }
-        textarea { height: 150px; resize: none; }
-        button { background: #d97706; color: white; border: none; padding: 14px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:hover { background: #b45309; }
-        button:disabled { background: #9ca3af; cursor: not-allowed; }
-        
-        /* Dynamic Cost Alert Box */
-        .cost-warning { display: none; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; font-weight: 500; }
-        
-        .instructions { margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5; padding: 12px; background: #f3f4f6; border-radius: 6px; }
-        
-        /* Right AI Screen Container */
-        .ai-frame-container { flex-grow: 1; height: 100%; background: #fff; position: relative; overflow-y: auto; padding: 25px; }
-        .placeholder-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #9ca3af; font-size: 16px; text-align: center; width: 80%; pointer-events: none; }
-        
-        /* Output Text Box */
-        #aiOutput { display: none; white-space: pre-wrap; font-size: 15px; line-height: 1.6; color: #1f2937; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puter.js To-Do Application</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Puter.js SDK -->
+  <script src="https://js.puter.com/v2/"></script>
+  <!-- FontAwesome Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-10 px-4 flex justify-center">
+  <div class="max-w-2xl w-full">
+    <!-- App Header -->
+    <header class="flex justify-between items-center mb-6 bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+      <div>
+        <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center gap-3">
+          <i class="fa-solid fa-list-check text-blue-400"></i> Cloud Tasks
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">Backed by Puter.js Key-Value Storage</p>
+      </div>
+      <div id="sync-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        Connecting...
+      </div>
+    </header>
 
-    <div class="workspace">
-        <!-- Left Side Controller -->
-        <div class="control-panel">
-            <h2>AI Workspace</h2>
-            <p style="font-size: 13px; color:#666; margin-top:-5px; margin-bottom:20px;">Powered by Puter.js</p>
-            
-            <label for="modelSelect">Select Model:</label>
-            <select id="modelSelect" onchange="checkModelCost()">
-                <option value="google/gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-                <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (100% Free Fallback)</option>
-            </select>
+    <!-- Main Card -->
+    <main class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+      <!-- Input Form -->
+      <form id="todo-form" class="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          type="text"
+          id="task-input"
+          placeholder="What needs to be done?"
+          required
+          class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        />
+        <select
+          id="priority-select"
+          class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <button
+          type="submit"
+          class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-plus"></i> Add
+        </button>
+      </form>
 
-            <!-- Cost Warning Banner -->
-            <div id="costWarning" class="cost-warning"></div>
-
-            <label for="promptInput">Type Your AI Prompt:</label>
-            <textarea id="promptInput" placeholder="Ask AI to generate a website layout, write complex scripts, explain theory..."></textarea>
-            
-            <button id="submitBtn" onclick="sendToAI()">Generate AI Stream</button>
-            
-            <div class="instructions">
-                <strong>💡 Safeguards Active:</strong><br>
-                Expensive variants (Opus, Fable) are filtered automatically to protect your 1,000 credit allowance.
-            </div>
+      <!-- Filter Controls & Counter -->
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-700">
+        <div class="flex gap-2">
+          <button data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white">All</button>
+          <button data-filter="active" class="filter-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600">Active</button>
+          <button data-filter="completed" class="filter-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600">Completed</button>
         </div>
+        <div class="text-sm text-slate-400 font-medium" id="task-counter">0 tasks remaining</div>
+      </div>
 
-        <!-- Right Side AI Output Window -->
-        <div class="ai-frame-container">
-            <div id="fallbackMessage" class="placeholder-text">
-                Your direct AI output workspace will render here instantly when you submit your prompt.
-            </div>
-            <div id="aiOutput"></div>
-        </div>
-    </div>
+      <!-- Task List -->
+      <ul id="task-list" class="space-y-3 min-h-[120px]"></ul>
 
-    <script>
-        // 🛠️ DEVELOPER TESTING CONTROLS
-        // Set this to true to see dummy text and completely freeze your token/limit usage!
-        const IS_MOCK_MODE = false; 
+      <!-- Footer Actions -->
+      <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center text-xs text-slate-400">
+        <button id="clear-completed" class="hover:text-red-400 transition-colors flex items-center gap-1.5">
+          <i class="fa-solid fa-trash-can"></i> Clear Completed
+        </button>
+        <span>Storage: Puter KV</span>
+      </div>
+    </main>
+  </div>
 
-        // Trigger loading models safely when window builds
-        window.addEventListener('DOMContentLoaded', loadModels);
+  <script>
+    const STORAGE_KEY = 'puter_todo_tasks_v1';
+    let tasks = [];
+    let currentFilter = 'all';
 
-        async function loadModels() {
-            const selectEl = document.getElementById('modelSelect');
-            try {
-                if (IS_MOCK_MODE) return;
+    const form = document.getElementById('todo-form');
+    const taskInput = document.getElementById('task-input');
+    const prioritySelect = document.getElementById('priority-select');
+    const taskList = document.getElementById('task-list');
+    const syncStatus = document.getElementById('sync-status');
+    const taskCounter = document.getElementById('task-counter');
+    const clearCompletedBtn = document.getElementById('clear-completed');
+    const filterButtons = document.querySelectorAll('.filter-btn');
 
-                const models = await puter.ai.listModels();
-                selectEl.innerHTML = ''; 
-
-                if (!models || models.length === 0) {
-                    selectEl.innerHTML = '<option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>';
-                    return;
-                }
-
-                models.forEach(m => {
-                    const modelId = m.id.toLowerCase();
-                    
-                    // 🛡️ WORKAROUND 1: Filter out heavy credit-draining premium tiers completely
-                    if (modelId.includes('opus') || modelId.includes('fable') || modelId.includes('gpt-4-turbo')) {
-                        console.log(`Skipped heavy model to save credits: ${m.id}`);
-                        return; 
-                    }
-
-                    const option = document.createElement('option');
-                    option.value = m.id;
-                    option.textContent = m.name ? `${m.name} (${m.id})` : m.id;
-                    
-                    // Set cheap, fast Gemini 2.5 Flash as the standard default
-                    if (m.id === 'google/gemini-2.5-flash') {
-                        option.selected = true;
-                    }
-                    selectEl.appendChild(option);
-                });
-
-                // Inject a guaranteed unmetered tier to the bottom
-                const freeOption = document.createElement('option');
-                freeOption.value = "meta-llama/llama-3-8b-instruct:free";
-                freeOption.textContent = "Llama 3 8B (100% Free OpenRouter Tier)";
-                selectEl.appendChild(freeOption);
-
-                // Run an initial check on the default selected model
-                checkModelCost();
-
-            } catch (err) {
-                console.error('Failed to load Puter models:', err);
-            }
+    // Initialize & Fetch Tasks from Puter Cloud Storage
+    async function init() {
+      updateSyncStatus('connecting', 'Connecting...');
+      try {
+        const cloudData = await puter.kv.get(STORAGE_KEY);
+        if (cloudData) {
+          tasks = typeof cloudData === 'string' ? JSON.parse(cloudData) : cloudData;
+        } else {
+          tasks = [];
         }
+        updateSyncStatus('connected', 'Cloud Synced');
+      } catch (err) {
+        console.warn('Puter KV unavailable, falling back to LocalStorage:', err);
+        const localData = localStorage.getItem(STORAGE_KEY);
+        if (localData) tasks = JSON.parse(localData);
+        updateSyncStatus('offline', 'Local Storage');
+      }
+      render();
+    }
 
-        // 🛡️ WORKAROUND 2: Display dynamic alert if a moderately premium model is highlighted
-        function checkModelCost() {
-            const selectEl = document.getElementById('modelSelect');
-            const warningEl = document.getElementById('costWarning');
-            const selectedModel = selectEl.value.toLowerCase();
+    // Save Tasks to Puter KV Store
+    async function saveTasks() {
+      updateSyncStatus('saving', 'Syncing...');
+      try {
+        await puter.kv.set(STORAGE_KEY, JSON.stringify(tasks));
+        updateSyncStatus('connected', 'Cloud Synced');
+      } catch (err) {
+        console.error('Failed to save to Puter KV:', err);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        updateSyncStatus('offline', 'Saved Locally');
+      }
+    }
 
-            // Check if it's a paid tier model (e.g. standard Claude Sonnet or GPT-4o)
-            if ((selectedModel.includes('claude') || selectedModel.includes('gpt')) && !selectedModel.includes('free')) {
-                warningEl.style.display = "block";
-                warningEl.innerHTML = "⚠️ <strong>Premium Model Selected:</strong> This request consumes high credits. Use a free fallback model to preserve your remaining credits.";
-            } else {
-                warningEl.style.display = "none";
-            }
-        }
+    function updateSyncStatus(state, message) {
+      if (state === 'connecting' || state === 'saving') {
+        syncStatus.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> ${message}`;
+      } else if (state === 'connected') {
+        syncStatus.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> ${message}`;
+      } else {
+        syncStatus.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-400 border border-slate-600';
+        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> ${message}`;
+      }
+    }
 
-        async function sendToAI() {
-            const promptValue = document.getElementById('promptInput').value.trim();
-            let selectedModel = document.getElementById('modelSelect').value;
-            const outputDiv = document.getElementById('aiOutput');
-            const placeholder = document.getElementById('fallbackMessage');
-            const button = document.getElementById('submitBtn');
+    // Handle Form Submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = taskInput.value.trim();
+      if (!text) return;
 
-            if (!promptValue) {
-                alert("Please enter a question or prompt inside the text box first!");
-                return;
-            }
+      const newTask = {
+        id: Date.now().toString(),
+        text,
+        priority: prioritySelect.value,
+        completed: false
+      };
 
-            placeholder.style.display = "none";
-            outputDiv.style.display = "block";
-            outputDiv.innerText = "AI is thinking...";
-            button.disabled = true;
-            button.innerText = "Generating...";
+      tasks.unshift(newTask);
+      taskInput.value = '';
+      render();
+      await saveTasks();
+    });
 
-            if (IS_MOCK_MODE) {
-                setTimeout(() => {
-                    outputDiv.innerHTML = `<strong>[MOCK MODE ACTIVE]</strong><br><br>Local testing layout response for prompt: "<em>${promptValue}</em>" via <code>${selectedModel}</code>.`;
-                    button.disabled = false;
-                    button.innerText = "Generate AI Stream";
-                }, 800);
-                return;
-            }
+    // Toggle Task Completion
+    window.toggleTask = async function(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      render();
+      await saveTasks();
+    };
 
-            try {
-                const response = await puter.ai.chat(promptValue, { 
-                    model: selectedModel
-                });
-                
-                // Clean response object text extraction
-                let textContent = "";
-                if (typeof response === 'string') {
-                    textContent = response;
-                } else if (response && response.message && typeof response.message.content === 'string') {
-                    textContent = response.message.content;
-                } else if (response && response.text) {
-                    textContent = response.text;
-                } else if (response && response.message && Array.isArray(response.message.content)) {
-                    textContent = response.message.content
-                        .map(block => block.text || "")
-                        .join("");
-                } else {
-                    textContent = JSON.stringify(response);
-                }
+    // Delete Task
+    window.deleteTask = async function(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      render();
+      await saveTasks();
+    };
 
-                outputDiv.innerText = textContent;
+    // Clear Completed Tasks
+    clearCompletedBtn.addEventListener('click', async () => {
+      tasks = tasks.filter(t => !t.completed);
+      render();
+      await saveTasks();
+    });
 
-            } catch (err) {
-                console.error('AI Processing Error:', err);
-                outputDiv.innerHTML = `<span style="color: red; font-weight: bold;">Usage Error:</span> ${err.message || "Failed to complete request. Please switch to the Llama 3 Free Fallback."}`;
-            } finally {
-                button.disabled = false;
-                button.innerText = "Generate AI Stream";
-            }
-        }
-    </script>
+    // Handle Filters
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600';
+        });
+        btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white';
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    function getPriorityBadge(priority) {
+      const config = {
+        high: 'bg-red-500/10 text-red-400 border-red-500/20',
+        medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        low: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      };
+      return `<span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${config[priority]}">${priority}</span>`;
+    }
+
+    function render() {
+      const filtered = tasks.filter(t => {
+        if (currentFilter === 'active') return !t.completed;
+        if (currentFilter === 'completed') return t.completed;
+        return true;
+      });
+
+      const activeCount = tasks.filter(t => !t.completed).length;
+      taskCounter.textContent = `${activeCount} ${activeCount === 1 ? 'task' : 'tasks'} remaining`;
+
+      if (filtered.length === 0) {
+        taskList.innerHTML = `
+          <li class="text-center py-10 text-slate-500">
+            <i class="fa-regular fa-clipboard text-3xl mb-2 block"></i>
+            No tasks found
+          </li>
+        `;
+        return;
+      }
+
+      taskList.innerHTML = filtered.map(task => `
+        <li class="group flex items-center justify-between p-3.5 bg-slate-900/60 rounded-xl border border-slate-700/60 hover:border-slate-600 transition-all ${task.completed ? 'opacity-60' : ''}">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <button onclick="toggleTask('${task.id}')" class="w-5 h-5 rounded-md border flex items-center justify-center transition-all ${task.completed ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-600 hover:border-blue-400'}">
+              ${task.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+            </button>
+            <span class="truncate text-slate-200 ${task.completed ? 'line-through text-slate-500' : ''}">
+              ${escapeHtml(task.text)}
+            </span>
+            ${getPriorityBadge(task.priority)}
+          </div>
+          <button onclick="deleteTask('${task.id}')" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 ml-2">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </li>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+
+    init();
+  </script>
 </body>
 </html>
